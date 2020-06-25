@@ -44,7 +44,10 @@ def check_grb_on_website(grb_name):
 
 def create_report_from_result(result):
     if result["general"]["report_type"] == "trigdat":
-        web_version = result["general"]["version"]
+        if result['general']['phys_bkg']:
+            web_version = f'phys_bkg_{result["general"]["version"]}'
+        else:
+            web_version = result["general"]["version"]
     else:
         web_version = (
             f"{result['general']['report_type']}_{result['general']['version']}"
@@ -279,12 +282,20 @@ def update_grb_report(grb_name, result, wait_time, max_time):
             print(f"Response {response.status_code} at {url}: {response.text}")
 
 
-def upload_plot(grb_name, report_type, plot_file, plot_type, version, wait_time, max_time, det_name=""):
+def upload_plot(grb_name, report_type, plot_file, plot_type, version, wait_time, max_time, det_name="", phys_bkg=False):
     headers = {
         "Authorization": "Token {}".format(auth_token),
     }
 
-    web_version = version if report_type == "trigdat" else f"{report_type}_{version}"
+    if report_type == "trigdat":
+        if phys_bkg:
+            web_version = f'phys_bkg_{version}'
+        else:
+            web_version = version
+    else:
+        web_version = (
+            f"{report_type}_{version}"
+        )
 
     payload = {"plot_type": plot_type, "version": web_version, "det_name": det_name}
 
@@ -325,7 +336,7 @@ def upload_plot(grb_name, report_type, plot_file, plot_type, version, wait_time,
                     raise UnauthorizedRequest('The authentication token is not valid')
 
                 elif response.status_code == 204:
-                    raise EmptyFileError("The plot file is empty")
+                    raise EmptyFileError(f"The plot file is empty {plot_file}")
 
                 elif response.status_code == 409:
                     print("####################################################")
@@ -340,6 +351,7 @@ def upload_plot(grb_name, report_type, plot_file, plot_type, version, wait_time,
                 raise e
 
             except EmptyFileError as e:
+                print(plot_file)
                 raise e
 
             except Exception as e:
@@ -370,12 +382,20 @@ def upload_plot(grb_name, report_type, plot_file, plot_type, version, wait_time,
                 print(f"Response {response.status_code} at {url}: {response.text}")
 
 
-def upload_datafile(grb_name, report_type, data_file, file_type, version, wait_time, max_time):
+def upload_datafile(grb_name, report_type, data_file, file_type, version, wait_time, max_time, phys_bkg=False):
     headers = {
         "Authorization": "Token {}".format(auth_token),
     }
 
-    web_version = version if report_type == "trigdat" else f"{report_type}_{version}"
+    if report_type == "trigdat":
+        if phys_bkg:
+            web_version = f'phys_bkg_{version}'
+        else:
+            web_version = version
+    else:
+        web_version = (
+            f"{report_type}_{version}"
+        )
 
     payload = {"file_type": file_type, "version": web_version}
 
