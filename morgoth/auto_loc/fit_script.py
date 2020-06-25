@@ -26,11 +26,16 @@ bkg_fit_yaml_file = sys.argv[4]
 time_selection_yaml_file = sys.argv[5]
 data_type = sys.argv[6]
 
+if len(sys.argv) > 7:
+    phys_bkg_file = sys.argv[7]
+else:
+    phys_bkg_file = None
+
 # get fit object
 
 if data_type == "trigdat":
     multinest_fit = MultinestFitTrigdat(
-        grb_name, version, trigdat_file, bkg_fit_yaml_file, time_selection_yaml_file
+        grb_name, version, trigdat_file, bkg_fit_yaml_file, time_selection_yaml_file, phys_bkg_file
     )
     multinest_fit.fit()
     multinest_fit.save_fit_result()
