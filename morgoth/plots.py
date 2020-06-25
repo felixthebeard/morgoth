@@ -23,6 +23,7 @@ class CreateAllPlots(luigi.Task):
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    phys_bkg = luigi.BoolParameter()
 
     def requires(self):
         return {
@@ -30,65 +31,76 @@ class CreateAllPlots(luigi.Task):
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
             "location": CreateLocationPlot(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
             "corner": CreateCornerPlot(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
             "molllocation": CreateMollLocationPlot(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
             "satellite": CreateSatellitePlot(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
             "spectrum": CreateSpectrumPlot(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
             "3dlocation": Create3DLocationPlot(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
             "balrogswift": CreateBalrogSwiftPlot(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
         }
 
     def output(self):
         filename = f"{self.report_type}_{self.version}_plot_all.txt"
+        sub_dir = "phys" if self.phys_bkg else ""
         return luigi.LocalTarget(
             os.path.join(
-                base_dir, self.grb_name, self.report_type, self.version, filename
+                base_dir,
+                self.grb_name,
+                self.report_type,
+                sub_dir,
+                self.version,
+                filename
             )
         )
 
     def run(self):
-        filename = f"{self.report_type}_{self.version}_plot_all.txt"
-        tmp = os.path.join(
-            base_dir, self.grb_name, self.report_type, self.version, filename
-        )
 
-        os.system(f"touch {tmp}")
+        os.system(f"touch {self.output().path}")
 
 
 class CreateAllLightcurves(luigi.Task):
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    phys_bkg = luigi.BoolParameter()
 
     def requires(self):
         return {
@@ -97,102 +109,118 @@ class CreateAllLightcurves(luigi.Task):
                 report_type=self.report_type,
                 detector="n0",
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
             "n1": CreateLightcurve(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 detector="n1",
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
             "n2": CreateLightcurve(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 detector="n2",
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
             "n3": CreateLightcurve(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 detector="n3",
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
             "n4": CreateLightcurve(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 detector="n4",
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
             "n5": CreateLightcurve(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 detector="n5",
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
             "n6": CreateLightcurve(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 detector="n6",
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
             "n7": CreateLightcurve(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 detector="n7",
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
             "n8": CreateLightcurve(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 detector="n8",
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
             "n9": CreateLightcurve(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 detector="n9",
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
             "na": CreateLightcurve(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 detector="na",
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
             "nb": CreateLightcurve(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 detector="nb",
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
             "b0": CreateLightcurve(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 detector="b0",
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
             "b1": CreateLightcurve(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 detector="b1",
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
         }
 
     def output(self):
         filename = f"{self.report_type}_{self.version}_plot_all_lightcurves.txt"
+        sub_dir = "phys" if self.phys_bkg else ""
         return luigi.LocalTarget(
             os.path.join(
-                base_dir, self.grb_name, self.report_type, self.version, filename
+                base_dir,
+                self.grb_name,
+                self.report_type,
+                sub_dir,
+                self.version,
+                filename
             )
         )
 
     def run(self):
-        filename = f"{self.report_type}_{self.version}_plot_all_lightcurves.txt"
-        tmp = os.path.join(
-            base_dir, self.grb_name, self.report_type, self.version, filename
-        )
 
-        os.system(f"touch {tmp}")
+        os.system(f"touch {self.output().path}")
 
 
 class CreateLightcurve(luigi.Task):
@@ -200,17 +228,30 @@ class CreateLightcurve(luigi.Task):
     report_type = luigi.Parameter()
     detector = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    phys_bkg = luigi.BoolParameter()
 
     def requires(self):
         return ProcessFitResults(
-            grb_name=self.grb_name, report_type=self.report_type, version=self.version
+            grb_name=self.grb_name,
+            report_type=self.report_type,
+            version=self.version,
+            phys_bkg=self.phys_bkg
         )
 
     def output(self):
-        base_job = os.path.join(base_dir, self.grb_name, self.report_type, self.version)
         filename = f"{self.grb_name}_lightcurve_{self.report_type}_detector_{self.detector}_plot_{self.version}.png"
+        sub_dir = "phys" if self.phys_bkg else ""
         return luigi.LocalTarget(
-            os.path.join(base_job, "plots", "lightcurves", filename)
+            os.path.join(
+                base_dir,
+                self.grb_name,
+                self.report_type,
+                sub_dir,
+                self.version,
+                "plots",
+                "lightcurves",
+                filename
+            )
         )
 
     def run(self):
@@ -222,21 +263,27 @@ class CreateLocationPlot(luigi.Task):
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    phys_bkg = luigi.BoolParameter()
 
     def requires(self):
         return ProcessFitResults(
-            grb_name=self.grb_name, report_type=self.report_type, version=self.version
+            grb_name=self.grb_name,
+            report_type=self.report_type,
+            version=self.version,
+            phys_bkg=self.phys_bkg
         )
 
     def output(self):
         filename = (
             f"{self.grb_name}_location_plot_{self.report_type}_{self.version}.png"
         )
+        sub_dir = "phys" if self.phys_bkg else ""
         return luigi.LocalTarget(
             os.path.join(
                 base_dir,
                 self.grb_name,
                 self.report_type,
+                sub_dir,
                 self.version,
                 "plots",
                 filename,
@@ -258,21 +305,27 @@ class CreateCornerPlot(luigi.Task):
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    phys_bkg = luigi.BoolParameter()
 
     def requires(self):
         return ProcessFitResults(
-            grb_name=self.grb_name, report_type=self.report_type, version=self.version
+            grb_name=self.grb_name,
+            report_type=self.report_type,
+            version=self.version,
+            phys_bkg=self.phys_bkg
         )
 
     def output(self):
         filename = (
             f"{self.grb_name}_allcorner_plot_{self.report_type}_{self.version}.png"
         )
+        sub_dir = "phys" if self.phys_bkg else ""
         return luigi.LocalTarget(
             os.path.join(
                 base_dir,
                 self.grb_name,
                 self.report_type,
+                sub_dir,
                 self.version,
                 "plots",
                 filename,
@@ -294,6 +347,7 @@ class CreateMollLocationPlot(luigi.Task):
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    phys_bkg = luigi.BoolParameter()
 
     def requires(self):
         return {
@@ -301,16 +355,27 @@ class CreateMollLocationPlot(luigi.Task):
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
             "trigdat_version": GatherTrigdatDownload(grb_name=self.grb_name),
         }
 
     def output(self):
         filename = (
-            f"{base_dir}/{self.grb_name}/{self.report_type}/{self.version}/plots/"
             f"{self.grb_name}_molllocation_plot_{self.report_type}_{self.version}.png"
         )
-        return luigi.LocalTarget(filename)
+        sub_dir = "phys" if self.phys_bkg else ""
+        return luigi.LocalTarget(
+            os.path.join(
+                base_dir,
+                self.grb_name,
+                self.report_type,
+                sub_dir,
+                self.version,
+                'plots',
+                filename
+            )
+        )
 
     def run(self):
         with self.input()["fit_result"]["result_file"].open() as f:
@@ -353,6 +418,7 @@ class CreateSatellitePlot(luigi.Task):
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    phys_bkg = luigi.BoolParameter()
 
     def requires(self):
         return {
@@ -360,6 +426,7 @@ class CreateSatellitePlot(luigi.Task):
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
             "trigdat_version": GatherTrigdatDownload(grb_name=self.grb_name),
         }
@@ -368,11 +435,13 @@ class CreateSatellitePlot(luigi.Task):
         filename = (
             f"{self.grb_name}_satellite_plot_{self.report_type}_{self.version}.png"
         )
+        sub_dir = "phys" if self.phys_bkg else ""
         return luigi.LocalTarget(
             os.path.join(
                 base_dir,
                 self.grb_name,
                 self.report_type,
+                sub_dir,
                 self.version,
                 "plots",
                 filename,
@@ -414,21 +483,27 @@ class CreateSpectrumPlot(luigi.Task):
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    phys_bkg = luigi.BoolParameter()
 
     def requires(self):
         return ProcessFitResults(
-            grb_name=self.grb_name, report_type=self.report_type, version=self.version
+            grb_name=self.grb_name,
+            report_type=self.report_type,
+            version=self.version,
+            phys_bkg=self.phys_bkg
         )
 
     def output(self):
         filename = (
             f"{self.grb_name}_spectrum_plot_{self.report_type}_{self.version}.png"
         )
+        sub_dir = "phys" if self.phys_bkg else ""
         return luigi.LocalTarget(
             os.path.join(
                 base_dir,
                 self.grb_name,
                 self.report_type,
+                sub_dir,
                 self.version,
                 "plots",
                 filename,
@@ -444,6 +519,7 @@ class Create3DLocationPlot(luigi.Task):
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    phys_bkg = luigi.BoolParameter()
 
     def requires(self):
         return {
@@ -451,6 +527,7 @@ class Create3DLocationPlot(luigi.Task):
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 version=self.version,
+                phys_bkg=self.phys_bkg
             ),
             "trigdat_version": GatherTrigdatDownload(grb_name=self.grb_name),
         }
@@ -459,11 +536,13 @@ class Create3DLocationPlot(luigi.Task):
         filename = (
             f"{self.grb_name}_3dlocation_plot_{self.report_type}_{self.version}.html"
         )
+        sub_dir = "phys" if self.phys_bkg else ""
         return luigi.LocalTarget(
             os.path.join(
                 base_dir,
                 self.grb_name,
                 self.report_type,
+                sub_dir,
                 self.version,
                 "plots",
                 filename,
@@ -507,21 +586,27 @@ class CreateBalrogSwiftPlot(luigi.Task):
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    phys_bkg = luigi.BoolParameter()
 
     def requires(self):
         return ProcessFitResults(
-            grb_name=self.grb_name, report_type=self.report_type, version=self.version
+            grb_name=self.grb_name,
+            report_type=self.report_type,
+            version=self.version,
+            phys_bkg=self.phys_bkg
         )
 
     def output(self):
         filename = (
             f"{self.grb_name}_balrogswift_plot_{self.report_type}_{self.version}.png"
         )
+        sub_dir = "phys" if self.phys_bkg else ""
         return luigi.LocalTarget(
             os.path.join(
                 base_dir,
                 self.grb_name,
                 self.report_type,
+                sub_dir,
                 self.version,
                 "plots",
                 filename,
