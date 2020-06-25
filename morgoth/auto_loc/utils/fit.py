@@ -217,18 +217,15 @@ class MultinestFitTrigdat(object):
         self._bayes = BayesianAnalysis(self._model, self._data_list)
 
         # Create the chains directory
-        chains_dir, temp_chains_dir = self._create_chains_dir()
+        chains_dir, self._temp_chains_dir = self._create_chains_dir()
 
-        chains_path = os.path.join(temp_chains_dir, f"trigdat_{self._version}_")
+        chains_path = os.path.join(self._temp_chains_dir, f"trigdat_{self._version}_")
 
         self._bayes.set_sampler("multinest")
 
         self._bayes.sampler.setup(n_live_points=800, chain_name=chains_path)
 
         _ = self._bayes.sample()
-
-        # Remove the symbolic link
-        os.unlink(temp_chains_dir)
 
     def save_fit_result(self):
         """
@@ -288,6 +285,10 @@ class MultinestFitTrigdat(object):
                 os.symlink(chains_dir, temp_chains_dir)
 
         return chains_dir, temp_chains_dir
+
+    def unlink_temp_chains_dir(self):
+        # Remove the symbolic link
+        os.unlink(self._temp_chains_dir)
 
     def create_spectrum_plot(self):
         """
@@ -574,18 +575,15 @@ class MultinestFitTTE(object):
         self._bayes = BayesianAnalysis(self._model, self._data_list)
 
         # Create the chains directory
-        chains_dir, temp_chains_dir = self._create_chains_dir()
+        chains_dir, self._temp_chains_dir = self._create_chains_dir()
 
-        chains_path = os.path.join(temp_chains_dir, f"tte_{self._version}_")
+        chains_path = os.path.join(self._temp_chains_dir, f"tte_{self._version}_")
 
         self._bayes.set_sampler("multinest")
 
         self._bayes.sampler.setup(n_live_points=800, chain_name=chains_path)
 
         _ = self._bayes.sample()
-
-        # Remove the symbolic link
-        os.unlink(temp_chains_dir)
 
     def save_fit_result(self):
         """
@@ -641,6 +639,9 @@ class MultinestFitTTE(object):
                 os.symlink(chains_dir, temp_chains_dir)
 
         return chains_dir, temp_chains_dir
+
+    def unlink_temp_chains_dir(self):
+        os.unlink(self._temp_chains_dir)
 
     def create_spectrum_plot(self):
         """

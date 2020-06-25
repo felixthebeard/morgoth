@@ -40,6 +40,7 @@ if data_type == "trigdat":
     multinest_fit.fit()
     multinest_fit.save_fit_result()
     multinest_fit.create_spectrum_plot()
+    multinest_fit.unlink_temp_chains_dir()
 
 elif data_type == "tte":
     multinest_fit = MultinestFitTTE(
@@ -48,6 +49,7 @@ elif data_type == "tte":
     multinest_fit.fit()
     multinest_fit.save_fit_result()
     multinest_fit.create_spectrum_plot()
+    multinest_fit.unlink_temp_chains_dir()
 
 else:
     raise AssertionError("Please use either tte or trigdat as input")
