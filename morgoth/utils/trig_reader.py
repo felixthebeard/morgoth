@@ -1,4 +1,6 @@
 
+import os
+
 import numpy as np
 
 import collections
@@ -8,8 +10,12 @@ from threeML.utils.time_series.binned_spectrum_series import BinnedSpectrumSerie
 from threeML.utils.spectrum.binned_spectrum_set import BinnedSpectrumSet
 from threeML.utils.data_builders.time_series_builder import TimeSeriesBuilder
 from threeML.plugins.DispersionSpectrumLike import DispersionSpectrumLike
+from threeML.plugins.OGIPLike import OGIPLike
 
 from threeML.utils.time_interval import TimeIntervalSet
+
+from gbmbkgpy.io.export import PHAWriter
+from gbmbkgpy.io.package_data import get_path_of_external_data_dir
 
 import astropy.io.fits as fits
 
@@ -53,16 +59,17 @@ class TrigReader(object):
         time_resolved=False,
         verbose=True,
         poly_order=-1,
-        restore_poly_fit=None,
+        restore_poly_fit=None
     ):
 
         # self._backgroundexists = False
         # self._sourceexists = False
-
+        self._rsp = []
         self._verbose = verbose
         self._time_resolved = time_resolved
         self._poly_order = poly_order
         self._restore_poly_fit = restore_poly_fit
+        self._physical_bkg = None
         # Read the trig data file and get the appropriate info
 
         trigdat = fits.open(trigdat_file)
@@ -293,6 +300,7 @@ class TrigReader(object):
             # attach that to the full list
 
             self._time_series[name] = tsb
+            self._rsp.append(tmp_drm)
 
     def view_lightcurve(self, start=-30, stop=30, return_plots=False):
         """
@@ -337,6 +345,13 @@ class TrigReader(object):
         for name, det in self._time_series.items():
             det.set_active_time_interval(*intervals)
 
+        self._active_time_intervals = TimeIntervalSet.from_strings(*intervals)
+
+    def set_physical_background(self, combined_bkg_file, pha_output_dir):
+
+        self._physical_bkg = combined_bkg_file
+        self._pha_output_dir = pha_output_dir
+
     def to_plugin(self, *detectors):
         """
 
@@ -347,6 +362,24 @@ class TrigReader(object):
         """
 
         data = []
+
+        if self._physical_bkg is not None:
+
+            if not os.path.exists(self._pha_output_dir):
+                os.makedirs(self._pha_output_dir)
+
+            bkg_pha_writer = PHAWriter.from_combined_hdf5(
+                self._physical_bkg
+            )
+
+            # TODO: Accept multiple intervals
+            bkg_pha_writer.write_pha(
+                output_dir=self._pha_output_dir,
+                active_time_start=self._active_time_intervals[0].start,
+                active_time_end=self._active_time_intervals[0].stop,
+                file_name='phys',
+                overwrite=True
+            )
 
         for det in detectors:
             # first create a DSL
@@ -360,6 +393,30 @@ class TrigReader(object):
             balrog_like = BALROGLike.from_spectrumlike(speclike, time=time)
 
             balrog_like.set_active_measurements("c1-c6")
+
+            if self._physical_bkg is not None:
+
+                balrog_like.write_pha(
+                    os.path.join(self._pha_output_dir, f"data_{det}.pha"),
+                    overwrite=True,
+                    force_rsp_write=True
+                )
+
+                ogip_like = OGIPLike(
+                    f"grb{det}",
+                    observation=os.path.join(self._pha_output_dir, f"data_{det}.pha"),
+                    background=os.path.join(self._pha_output_dir, f"phys_{det}_bak.pha"),
+                    response=os.path.join(self._pha_output_dir, f"data_{det}.rsp"),
+                    spectrum_number=1
+                )
+
+                balrog_like = BALROGLike.from_spectrumlike(
+                    spectrum_like=ogip_like,
+                    time=time,
+                    drm_generator=self._rsp[lu.index(det)]
+                )
+
+                balrog_like.set_active_measurements("c1-c6")
 
             data.append(balrog_like)
 
