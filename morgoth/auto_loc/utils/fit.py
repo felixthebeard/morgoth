@@ -216,38 +216,19 @@ class MultinestFitTrigdat(object):
         # define bayes object with model and data_list
         self._bayes = BayesianAnalysis(self._model, self._data_list)
 
-        sub_dir = "phys_" if self._phys_bkg_file is not None else ""
-        # define temp chain save path
-        self._temp_chains_dir = os.path.join(
-            base_dir, self._grb_name, f"c_trig_{sub_dir}{self._version}"
-        )
-        chain_path = os.path.join(self._temp_chains_dir, f"trigdat_{self._version}_")
+        # Create the chains directory
+        chains_dir, temp_chains_dir = self._create_chains_dir()
 
-        # Make temp chains folder if it does not exists already
-        if not os.path.exists(self._temp_chains_dir):
-            os.mkdir(os.path.join(self._temp_chains_dir))
+        chains_path = os.path.join(temp_chains_dir, f"trigdat_{self._version}_")
 
         self._bayes.set_sampler("multinest")
 
-        self._bayes.sampler.setup(n_live_points=800, chain_name=chain_path)
+        self._bayes.sampler.setup(n_live_points=800, chain_name=chains_path)
 
         _ = self._bayes.sample()
 
-        # wrap for ra angle
-        # wrap = [0] * len(self._model.free_parameters)
-        # wrap[0] = 1
-
-        # # use multinest to sample the posterior
-        # # set main_path+trigger to whatever you want to use
-        # _ = self._bayes.sample_multinest(
-        #     800,
-        #     chain_name=chain_path,
-        #     importance_nested_sampling=False,
-        #     const_efficiency_mode=False,
-        #     wrapped_params=wrap,
-        #     verbose=True,
-        #     resume=True,
-        # )
+        # Remove the symbolic link
+        os.unlink(temp_chains_dir)
 
     def save_fit_result(self):
         """
@@ -269,23 +250,44 @@ class MultinestFitTrigdat(object):
             self._bayes.restore_median_fit()
             self._bayes.results.write_to(fit_result_path, overwrite=True)
 
-    def move_chains_dir(self):
+    def _create_chains_dir(self):
         """
-        Move temp chains directory to sub-folder '{base_dir}/{grb_name}/{report_type}/{version}/chains'
+        Create chains directory and symbolic link for MultiNest
+        chains_dir: '{base_dir}/{grb_name}/{report_type}/{version}/chains'
         :return:
         """
         sub_dir = "phys" if self._phys_bkg_file is not None else ""
+        sub_str = "phys_" if self._phys_bkg_file is not None else ""
+
+        chains_dir = os.path.join(
+            base_dir, self._grb_name, "trigdat", sub_dir, self._version, "chains"
+        )
+
+        temp_chains_dir = os.path.join(
+            base_dir, self._grb_name, f"c_trig_{sub_str}{self._version}"
+        )
+
         if using_mpi:
             if rank == 0:
-                chains_dir_store = os.path.join(
-                    base_dir, self._grb_name, "trigdat", sub_dir, self._version, "chains"
-                )
-                shutil.move(self._temp_chains_dir, chains_dir_store)
+
+                # Make chains folder if it does not exists already
+                if not os.path.exists(chains_dir):
+                    os.makedirs(chains_dir)
+
+                # Create a temp symbolic link with shorter path for MultiNest
+                if not os.path.exists(temp_chains_dir):
+                    os.symlink(chains_dir, temp_chains_dir)
+
         else:
-            chains_dir_store = os.path.join(
-                base_dir, self._grb_name, "trigdat", sub_dir, self._version, "chains"
-            )
-            shutil.move(self._temp_chains_dir, chains_dir_store)
+            # Make chains folder if it does not exists already
+            if not os.path.exists(chains_dir):
+                os.makedirs(chains_dir)
+
+            # Create a temp symbolic link with shorter path for MultiNest
+            if not os.path.exists(temp_chains_dir):
+                os.symlink(chains_dir, temp_chains_dir)
+
+        return chains_dir, temp_chains_dir
 
     def create_spectrum_plot(self):
         """
@@ -571,37 +573,19 @@ class MultinestFitTTE(object):
         # define bayes object with model and data_list
         self._bayes = BayesianAnalysis(self._model, self._data_list)
 
-        # define temp chain save path
-        self._temp_chains_dir = os.path.join(
-            base_dir, self._grb_name, f"c_tte_{self._version}"
-        )
-        chain_path = os.path.join(self._temp_chains_dir, f"tte_{self._version}_")
+        # Create the chains directory
+        chains_dir, temp_chains_dir = self._create_chains_dir()
 
-        # Make temp chains folder if it does not exists already
-        if not os.path.exists(self._temp_chains_dir):
-            os.mkdir(os.path.join(self._temp_chains_dir))
+        chains_path = os.path.join(temp_chains_dir, f"tte_{self._version}_")
 
         self._bayes.set_sampler("multinest")
 
-        self._bayes.sampler.setup(n_live_points=800)
+        self._bayes.sampler.setup(n_live_points=800, chain_name=chains_path)
 
         _ = self._bayes.sample()
 
-        # # wrap for ra angle
-        # wrap = [0] * len(self._model.free_parameters)
-        # wrap[0] = 1
-
-        # # use multinest to sample the posterior
-        # # set main_path+trigger to whatever you want to use
-        # _ = self._bayes.sample_multinest(
-        #     800,
-        #     chain_name=chain_path,
-        #     importance_nested_sampling=False,
-        #     const_efficiency_mode=False,
-        #     wrapped_params=wrap,
-        #     verbose=True,
-        #     resume=True,
-        # )
+        # Remove the symbolic link
+        os.unlink(temp_chains_dir)
 
     def save_fit_result(self):
         """
@@ -622,22 +606,41 @@ class MultinestFitTTE(object):
             self._bayes.restore_median_fit()
             self._bayes.results.write_to(fit_result_path, overwrite=True)
 
-    def move_chains_dir(self):
+    def _create_chains_dir(self):
         """
-        Move temp chains directory to sub-folder '{base_dir}/{grb_name}/{report_type}/{version}/chains'
+        Create chains directory and symbolic link for MultiNest
+        chains_dir: '{base_dir}/{grb_name}/{report_type}/{version}/chains'
         :return:
         """
+        chains_dir = os.path.join(
+            base_dir, self._grb_name, "tte", self._version, "chains"
+        )
+
+        temp_chains_dir = os.path.join(
+            base_dir, self._grb_name, f"c_tte_{self._version}"
+        )
+
         if using_mpi:
             if rank == 0:
-                chains_dir_store = os.path.join(
-                    base_dir, self._grb_name, "tte", self._version, "chains"
-                )
-                shutil.move(self._temp_chains_dir, chains_dir_store)
+
+                # Make chains folder if it does not exists already
+                if not os.path.exists(chains_dir):
+                    os.makedirs(chains_dir)
+
+                # Create a temp symbolic link with shorter path for MultiNest
+                if not os.path.exists(temp_chains_dir):
+                    os.symlink(chains_dir, temp_chains_dir)
+
         else:
-            chains_dir_store = os.path.join(
-                base_dir, self._grb_name, "tte", self._version, "chains"
-            )
-            shutil.move(self._temp_chains_dir, chains_dir_store)
+            # Make chains folder if it does not exists already
+            if not os.path.exists(chains_dir):
+                os.makedirs(chains_dir)
+
+            # Create a temp symbolic link with shorter path for MultiNest
+            if not os.path.exists(temp_chains_dir):
+                os.symlink(chains_dir, temp_chains_dir)
+
+        return chains_dir, temp_chains_dir
 
     def create_spectrum_plot(self):
         """
