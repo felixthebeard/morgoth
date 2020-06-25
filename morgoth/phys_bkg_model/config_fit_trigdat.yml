@@ -28,15 +28,15 @@ geometry:
 
 ##### Input for source Setup [use CR, use Earth, use CGB, point source list, fix earth, fix cgb #####
 setup:
-  use_saa:      false
+  use_saa:      true
   use_constant: true
   use_cr:       true
   use_earth:    true
   use_cgb:      true
   ps_list:
-    # auto_swift:
-    #     flux_limit: 0.1
-    #     exclude: [Crab]
+    auto_swift:
+        flux_limit: 0.1
+        exclude: [Crab]
 
     CRAB:
       fixed: true
