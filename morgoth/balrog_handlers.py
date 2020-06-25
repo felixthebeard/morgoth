@@ -7,6 +7,7 @@ from luigi.contrib.external_program import ExternalProgramTask
 from morgoth.bkg_fit_handler import (
     BackgroundFitTTE,
     BackgroundFitTrigdat,
+    PhysBackgroundFitTrigdat
 )
 from morgoth.configuration import morgoth_config
 from morgoth.downloaders import DownloadTrigdat, GatherTrigdatDownload
@@ -43,6 +44,7 @@ class ProcessFitResults(luigi.Task):
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    phys_bkg = luigi.BoolParameter()
 
     def requires(self):
 
@@ -66,7 +68,9 @@ class ProcessFitResults(luigi.Task):
                     grb_name=self.grb_name, version=self.version
                 ),
                 "balrog": RunBalrogTrigdat(
-                    grb_name=self.grb_name, version=self.version
+                    grb_name=self.grb_name,
+                    version=self.version,
+                    phys_bkg=self.phys_bkg
                 ),
             }
 
@@ -76,7 +80,8 @@ class ProcessFitResults(luigi.Task):
             )
 
     def output(self):
-        base_job = os.path.join(base_dir, self.grb_name, self.report_type, self.version)
+        sub_dir = "phys" if self.phys_bkg else ""
+        base_job = os.path.join(base_dir, self.grb_name, self.report_type, sub_dir, self.version)
         result_name = f"{self.report_type}_{self.version}_fit_result.yml"
 
         return {
@@ -104,7 +109,6 @@ class ProcessFitResults(luigi.Task):
                 f"The report_type '{self.report_type}' is not valid!"
             )
 
-        
         result_reader = ResultReader(
             grb_name=self.grb_name,
             report_type=self.report_type,
@@ -179,10 +183,12 @@ class RunBalrogTTE(ExternalProgramTask):
 class RunBalrogTrigdat(ExternalProgramTask):
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    phys_bkg = luigi.BoolParameter()
     always_log_stderr = True
 
     def requires(self):
-        return {
+
+        requirements = {
             "trigdat_file": DownloadTrigdat(
                 grb_name=self.grb_name, version=self.version
             ),
@@ -192,8 +198,16 @@ class RunBalrogTrigdat(ExternalProgramTask):
             "time_selection": TimeSelectionHandler(grb_name=self.grb_name),
         }
 
+        if self.phys_bkg:
+            requirements['phys_bkg_fit'] = PhysBackgroundFitTrigdat(
+                grb_name=self.grb_name, version=self.version
+            )
+
+        return requirements
+
     def output(self):
-        base_job = os.path.join(base_dir, self.grb_name, "trigdat", self.version)
+        sub_dir = "phys" if self.phys_bkg else ""
+        base_job = os.path.join(base_dir, self.grb_name, "trigdat", sub_dir, self.version)
         fit_result_name = f"trigdat_{self.version}_loc_results.fits"
         spectral_plot_name = f"{self.grb_name}_spectrum_plot_trigdat_{self.version}.png"
 
@@ -225,4 +239,9 @@ class RunBalrogTrigdat(ExternalProgramTask):
             f"{self.input()['time_selection'].path}",
             f"trigdat",
         ]
+
+        if self.phys_bkg:
+
+            command.append(f"{self.input()['phys_bkg_fit'].path}")
+
         return command
