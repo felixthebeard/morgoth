@@ -59,6 +59,7 @@ class MultinestFitTrigdat(object):
         trigdat_file,
         bkg_fit_yaml_file,
         time_selection_yaml_file,
+        phys_bkg_file=None
     ):
         """
         Initalize MultinestFit for Balrog
@@ -71,6 +72,7 @@ class MultinestFitTrigdat(object):
         self._version = version
         self._bkg_fit_yaml_file = bkg_fit_yaml_file
         self._time_selection_yaml_file = time_selection_yaml_file
+        self._phys_bkg_file = phys_bkg_file
 
         # Load yaml information
         with open(self._bkg_fit_yaml_file, "r") as f:
@@ -114,6 +116,19 @@ class MultinestFitTrigdat(object):
                 raise AssertionError("Can not restore background fit...")
 
         trig_reader.set_active_time_interval(self._active_time)
+
+        trig_reader.set_physical_background(
+            combined_bkg_file=self._phys_bkg_file,
+            pha_output_dir=os.path.join(
+                base_dir,
+                self._grb_name,
+                "trigdat",
+                "phys",
+                self._version,
+                "pha"
+
+            )
+        )
 
         trig_data = trig_reader.to_plugin(*self._use_dets)
 
@@ -198,16 +213,13 @@ class MultinestFitTrigdat(object):
         Fit the model to data using multinest
         :return:
         """
-
         # define bayes object with model and data_list
         self._bayes = BayesianAnalysis(self._model, self._data_list)
-        # wrap for ra angle
-        wrap = [0] * len(self._model.free_parameters)
-        wrap[0] = 1
 
+        sub_dir = "phys_" if self._phys_bkg_file is not None else ""
         # define temp chain save path
         self._temp_chains_dir = os.path.join(
-            base_dir, self._grb_name, f"c_trig_{self._version}"
+            base_dir, self._grb_name, f"c_trig_{sub_dir}{self._version}"
         )
         chain_path = os.path.join(self._temp_chains_dir, f"trigdat_{self._version}_")
 
@@ -215,17 +227,27 @@ class MultinestFitTrigdat(object):
         if not os.path.exists(self._temp_chains_dir):
             os.mkdir(os.path.join(self._temp_chains_dir))
 
-        # use multinest to sample the posterior
-        # set main_path+trigger to whatever you want to use
-        _ = self._bayes.sample_multinest(
-            800,
-            chain_name=chain_path,
-            importance_nested_sampling=False,
-            const_efficiency_mode=False,
-            wrapped_params=wrap,
-            verbose=True,
-            resume=True,
-        )
+        self._bayes.set_sampler("multinest")
+
+        self._bayes.sampler.setup(n_live_points=800, chain_name=chain_path)
+
+        _ = self._bayes.sample()
+
+        # wrap for ra angle
+        # wrap = [0] * len(self._model.free_parameters)
+        # wrap[0] = 1
+
+        # # use multinest to sample the posterior
+        # # set main_path+trigger to whatever you want to use
+        # _ = self._bayes.sample_multinest(
+        #     800,
+        #     chain_name=chain_path,
+        #     importance_nested_sampling=False,
+        #     const_efficiency_mode=False,
+        #     wrapped_params=wrap,
+        #     verbose=True,
+        #     resume=True,
+        # )
 
     def save_fit_result(self):
         """
@@ -233,8 +255,9 @@ class MultinestFitTrigdat(object):
         :return:
         """
         fit_result_name = f"trigdat_{self._version}_loc_results.fits"
+        sub_dir = "phys" if self._phys_bkg_file is not None else ""
         fit_result_path = os.path.join(
-            base_dir, self._grb_name, "trigdat", self._version, fit_result_name
+            base_dir, self._grb_name, "trigdat", sub_dir, self._version, fit_result_name
         )
 
         if using_mpi:
@@ -251,15 +274,16 @@ class MultinestFitTrigdat(object):
         Move temp chains directory to sub-folder '{base_dir}/{grb_name}/{report_type}/{version}/chains'
         :return:
         """
+        sub_dir = "phys" if self._phys_bkg_file is not None else ""
         if using_mpi:
             if rank == 0:
                 chains_dir_store = os.path.join(
-                    base_dir, self._grb_name, "trigdat", self._version, "chains"
+                    base_dir, self._grb_name, "trigdat", sub_dir, self._version, "chains"
                 )
                 shutil.move(self._temp_chains_dir, chains_dir_store)
         else:
             chains_dir_store = os.path.join(
-                base_dir, self._grb_name, "trigdat", self._version, "chains"
+                base_dir, self._grb_name, "trigdat", sub_dir, self._version, "chains"
             )
             shutil.move(self._temp_chains_dir, chains_dir_store)
 
@@ -269,8 +293,9 @@ class MultinestFitTrigdat(object):
         :return:
         """
         plot_name = f"{self._grb_name}_spectrum_plot_trigdat_{self._version}.png"
+        sub_dir = "phys" if self._phys_bkg_file is not None else ""
         plot_path = os.path.join(
-            base_dir, self._grb_name, "trigdat", self._version, "plots", plot_name
+            base_dir, self._grb_name, "trigdat", sub_dir, self._version, "plots", plot_name
         )
 
         color_dict = {
@@ -545,9 +570,6 @@ class MultinestFitTTE(object):
 
         # define bayes object with model and data_list
         self._bayes = BayesianAnalysis(self._model, self._data_list)
-        # wrap for ra angle
-        wrap = [0] * len(self._model.free_parameters)
-        wrap[0] = 1
 
         # define temp chain save path
         self._temp_chains_dir = os.path.join(
@@ -559,17 +581,27 @@ class MultinestFitTTE(object):
         if not os.path.exists(self._temp_chains_dir):
             os.mkdir(os.path.join(self._temp_chains_dir))
 
-        # use multinest to sample the posterior
-        # set main_path+trigger to whatever you want to use
-        _ = self._bayes.sample_multinest(
-            800,
-            chain_name=chain_path,
-            importance_nested_sampling=False,
-            const_efficiency_mode=False,
-            wrapped_params=wrap,
-            verbose=True,
-            resume=True,
-        )
+        self._bayes.set_sampler("multinest")
+
+        self._bayes.sampler.setup(n_live_points=800)
+
+        _ = self._bayes.sample()
+
+        # # wrap for ra angle
+        # wrap = [0] * len(self._model.free_parameters)
+        # wrap[0] = 1
+
+        # # use multinest to sample the posterior
+        # # set main_path+trigger to whatever you want to use
+        # _ = self._bayes.sample_multinest(
+        #     800,
+        #     chain_name=chain_path,
+        #     importance_nested_sampling=False,
+        #     const_efficiency_mode=False,
+        #     wrapped_params=wrap,
+        #     verbose=True,
+        #     resume=True,
+        # )
 
     def save_fit_result(self):
         """
